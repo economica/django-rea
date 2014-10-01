@@ -21,5 +21,9 @@ setup( name='django-rea',
         'Django>=1.4',
         'django-polymorphic',
         'django-xworkflows',
+        'django-entropy',
+    ]
+    dependency_links = [
+        'git+git@github.com:commoncode/entropy.git#egg=entropy',
     ]
 )
