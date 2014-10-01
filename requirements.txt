@@ -1,0 +1,10 @@
+# Development requirements
+
+Django==1.7
+django-polymorphic==0.5.6
+django-xworkflows==0.9.3
+xworkflows==1.0.4
+
+# Common Code / Entropy
+# I'd really like to remove this requirement, unless it's absolutely necessary
+git+https://github.com/commoncode/entropy.git

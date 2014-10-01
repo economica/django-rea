@@ -80,7 +80,7 @@ class ContractTemplate(PolymorphicModel, TitleMixin):
     '''
     Contract model which is instantiated by an Offer for Goods (Products) or Services
     in return for Payment or other form of Exchange Duality.
-    
+
     Future features:
         - Visitor Pattern Override
         - Contract Versioning
@@ -121,14 +121,14 @@ class Contract(xwf_models.WorkflowEnabled, PolymorphicModel):
         management of the workflow
         '''
         if force:
-            return super(BoundContract).save(self) 
+            return super(BoundContract).save(self)
         if self.id:
             # @@@ this should be done better?
             raise Exception('A Bound Contract cannont be altered once created.  It must be recreated.')
         return super(BoundContract).save(self)
 
 
-    is_terminated = models.BooleanField()
+    is_terminated = models.BooleanField(default=False)
 
     def terminate(self):
         '''
@@ -191,12 +191,16 @@ class ClauseRuleAspect(PolymorphicModel, CreatedMixin, ModifiedMixin):
 class ContractClause(PolymorphicModel, OrderingMixin):
     '''
     Contract Clause
-    
+
     '''
     # order / ordering
 
     contract = models.ForeignKey('Contract')
     clause = models.ForeignKey('Clause')
+
+
+class ContractInstance(models.Model):
+    pass
 
 
 class ContractInstanceClause(PolymorphicModel, OrderingMixin):
@@ -209,9 +213,9 @@ class ContractInstanceClause(PolymorphicModel, OrderingMixin):
     clause = models.ForeignKey('Clause')
 
 
-# 
+#
 # Clause Rules Library
-# 
+#
 
 class PaymentReceived(ClauseRuleAspect):
 

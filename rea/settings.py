@@ -5,26 +5,27 @@ from django.conf import settings
 # has been created the Agent Models should be
 # overridden to best describe the environment.
 REA_RECEIVING_AGENT_MODEL = getattr(
-    settings, 
-    'REA_RECEIVING_AGENT_MODEL', 
+    settings,
+    'REA_RECEIVING_AGENT_MODEL',
     'rea.Agent'
 )
 
 REA_PROVIDING_AGENT_MODEL = getattr(
-    settings, 
-    'REA_PROVIDING_AGENT_MODEL', 
+    settings,
+    'REA_PROVIDING_AGENT_MODEL',
     'rea.Agent'
 )
 
-# Every REA Economic System is ultimately created from the 
+
+# Every REA Economic System is ultimately created from the
 # perspective of a primary reporting agent, usually the Enterprise
 # using the system.
-# 
+#
 # Givent the REA_PROVIDING_AGENT_MODEL, correlate the ID of that
 # record that corresponds to this primary agent.
 REA_REPORTING_AGENT_ID = getattr(
-    settings, 
-    'REA_REPORTING_AGENT_ID', 
+    settings,
+    'REA_REPORTING_AGENT_ID',
     1
 )
 
