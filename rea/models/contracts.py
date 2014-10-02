@@ -11,6 +11,7 @@ from entropy.base import (
 
 from ..settings import REA_RECEIVING_AGENT_MODEL, REA_PROVIDING_AGENT_MODEL
 from ..utils import classmaker
+from ..models import Event
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +37,18 @@ class Contract(PolymorphicModel, TitleMixin, SlugMixin):
 
 class SalesOrder(Contract):
 
-    def payment_recieved(self):
-        pass
-
-    def goods_fulfilled(self):
-        pass
-
     def is_done(self):
-        return self.payment_recieved() and self.goods_fulfilled()
+        # For a sales order to be considered `Done` it needs commitments, and all of it's commitments
+        # need to have matching `Event` objects
+        commitments = self.commitment_set.all()
+
+        # if there are no commitments, this can't be completed yet
+        if not commitments:
+            return False
+
+        for c in commitments:
+            if not Event.objects.filter(commitment=c):
+                # return False immediately if we find a commitment without a matching Event
+                return False
+
+        return True

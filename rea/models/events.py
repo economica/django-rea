@@ -29,9 +29,9 @@ class Event(PolymorphicModel):
     def duality_event(self):
         try:
             # Fetch the Reciprocal Commitment and test
-            # for the existence of a corresponding Increment or 
+            # for the existence of a corresponding Increment or
             # Decrement Event
-            
+
             commitment = self.commitment_line.commitment
             if commitment.decrement_line == self.commitment_line:
                 # if we have a match; then we want the opposite;
@@ -56,7 +56,7 @@ class Event(PolymorphicModel):
     def has_duality(self):
         '''
         Test whether the Decrement and / or Increment Events
-        exist and satisfy the Duality of the exchange dictated by 
+        exist and satisfy the Duality of the exchange dictated by
         the Reciprocity of the Commitment.
 
         Not 100% sure if this function is useful; or merely theoretical;
@@ -65,7 +65,7 @@ class Event(PolymorphicModel):
         found in Accounting systems.
 
         Upon more thinking, its likely that this function will get much more
-        complex, dependending on reconcilliation logic - such as allowing for 
+        complex, dependending on reconcilliation logic - such as allowing for
         one or more applied payments to the initial provision of resources.
         '''
         dualtity_event = self.dualtity_event()
@@ -80,8 +80,8 @@ class DecrementEvent(Event, DecrementLineMixin):
     '''
     DecrementEvent down cast from Event
     '''
-    
-    # recieving_agent
+
+    # reveiving_agent
     # commitment
     # occured_at
     # resource
@@ -102,8 +102,7 @@ class IncrementEvent(Event, IncrementLineMixin):
     # occured_at
     # resource
     # quantity
-    
+
     def commitment_line(self): # @@@ is this necessary?
         '''return the relevant commitment line'''
         return self.commitment.increment_line
-

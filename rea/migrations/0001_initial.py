@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('quantity', models.FloatField()),
-                ('recieving_agent', models.ForeignKey(related_name=b'rea_decrementcommitmentline_recieving_agents', to='rea.Agent')),
+                ('receiving_agent', models.ForeignKey(related_name=b'rea_decrementcommitmentline_reveiving_agents', to='rea.Agent')),
             ],
             options={
                 'abstract': False,
@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('event_ptr', models.OneToOneField(parent_link=True, auto_created=True, primary_key=True, serialize=False, to='rea.Event')),
                 ('quantity', models.FloatField()),
-                ('recieving_agent', models.ForeignKey(related_name=b'rea_decrementevent_recieving_agents', to='rea.Agent')),
+                ('receiving_agent', models.ForeignKey(related_name=b'rea_decrementevent_reveiving_agents', to='rea.Agent')),
             ],
             options={
                 'abstract': False,

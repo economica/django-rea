@@ -15,10 +15,10 @@ class LineMixin(models.Model):
 
 
 class DecrementLineMixin(LineMixin):
-        
-    recieving_agent = models.ForeignKey(
+
+    receiving_agent = models.ForeignKey(
         REA_RECEIVING_AGENT_MODEL,
-        related_name='%(app_label)s_%(class)s_recieving_agents')
+        related_name='%(app_label)s_%(class)s_reveiving_agents')
 
     class Meta:
         abstract = True
