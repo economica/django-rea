@@ -18,12 +18,8 @@ setup( name='django-rea',
         'Programming Language :: Python',
     ],
     install_requires = [
-        'Django>=1.4',
+        'Django>=1.7',
         'django-polymorphic',
         'django-xworkflows',
-        'django-entropy',
-    ]
-    dependency_links = [
-        'git+git@github.com:commoncode/entropy.git#egg=entropy',
     ]
 )
