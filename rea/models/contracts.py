@@ -11,7 +11,10 @@ from entropy.base import (
 
 from ..settings import REA_RECEIVING_AGENT_MODEL, REA_PROVIDING_AGENT_MODEL
 from ..utils import classmaker
-from ..models import Event
+
+from .reconciliation import Reconciliation
+from .commitments import *
+from .events import *
 
 logger = logging.getLogger(__name__)
 
@@ -32,23 +35,31 @@ class Contract(PolymorphicModel, TitleMixin, SlugMixin):
     )
 
     def is_done(self):
+
+
+
         return NotImplemented()
 
 
 class SalesOrder(Contract):
 
     def is_done(self):
-        # For a sales order to be considered `Done` it needs commitments, and all of it's commitments
-        # need to have matching `Event` objects
+        '''
+        Sales Order is considered done when Payment has been reconciled
+        against the Sale and the Product has been fulfilled.
+        '''
+
         commitments = self.commitment_set.all()
+        for commitment in commitments:
+            if commitment.__class__ == IncrementCommitment:
 
-        # if there are no commitments, this can't be completed yet
-        if not commitments:
-            return False
+                try:
+                    # import ipdb; ipdb.set_trace()
+                    reconciliation = Reconciliation.objects.get(event=commitment)
+                except Reconciliation.DoesNotExist:
+                    return False
 
-        for c in commitments:
-            if not Event.objects.filter(commitment=c):
-                # return False immediately if we find a commitment without a matching Event
-                return False
+                return reconciliation.is_reconciled
 
-        return True
+
+        return False

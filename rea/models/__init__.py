@@ -39,4 +39,5 @@ from .contracts import *
 from .agents import *
 from .commitments import *
 from .resources import *
+from .reconciliation import *
 from ..settings import REA_RECEIVING_AGENT_MODEL, REA_PROVIDING_AGENT_MODEL

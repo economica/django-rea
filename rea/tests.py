@@ -1,6 +1,17 @@
 from django.test import TestCase
-from rea.models import (Agent, SalesOrder, Resource, Commitment,
-    IncrementCommitmentLine, DecrementCommitmentLine, Event)
+from rea.models import (
+    Agent, 
+    Commitment,
+    DecrementCommitment, 
+    DecrementEvent,
+    Event,
+    IncrementCommitment,
+    IncrementEvent,
+    Resource, 
+    ReconciliationInitiator,
+    ReconciliationTerminator,
+    SalesOrder, 
+)
 
 
 class SimpleTestCase(TestCase):
@@ -29,41 +40,73 @@ class SalesOrderTest(TestCase):
 
     def test_sales_order(self):
         fish_order = SalesOrder()
-        fish_order.receiving_agent = self.brenton   # why is this needed when our commitment duplicate this information?
-        fish_order.providing_agent = self.daryl
+        
+        fish_order.receiving_agent = self.daryl  # Customer
+        fish_order.providing_agent = self.brenton # Reporting Agent
         fish_order.save()
 
         # Order should be incomplete
         self.assertFalse(fish_order.is_done())
 
         # Fish Commitment
-        increment_fish = IncrementCommitmentLine.objects.create(resource=self.fish, quantity=3, providing_agent=self.daryl)
-        decrement_fish = DecrementCommitmentLine.objects.create(resource=self.fish, quantity=3, receiving_agent=self.brenton)
-
-        fish_commitment = Commitment()
-        fish_commitment.contract = fish_order
-        fish_commitment.increment_line = increment_fish
-        fish_commitment.decrement_line = decrement_fish
-        fish_commitment.save()
-
+        decrement_comittment = DecrementCommitment.objects.create(
+            contract=fish_order,
+            resource=self.fish, 
+            quantity=3, 
+            receiving_agent=self.daryl)
+        
         # Cash Commitment
-        increment_cash = IncrementCommitmentLine.objects.create(resource=self.cash, quantity=9.95, providing_agent=self.brenton)
-        decrement_cash = DecrementCommitmentLine.objects.create(resource=self.cash, quantity=9.95, receiving_agent=self.daryl)
-
-        # XXX: Okay, there should be a OneToOne relationship in here somewhere to ensure that we can't have
-        # commitments associated with multiple orders (or Events!)
-        cash_commitment = Commitment()
-        cash_commitment.contract = fish_order
-        cash_commitment.increment_line = increment_cash
-        cash_commitment.decrement_line = decrement_cash
-        cash_commitment.save()
+        increment_comittment = IncrementCommitment.objects.create(
+            contract=fish_order,
+            resource=self.cash, 
+            quantity=9.95, 
+            providing_agent=self.daryl)
 
         # Order should _still_ be incomplete
         self.assertFalse(fish_order.is_done())
 
-        # Create payment events, then we're locking it in
-        Event(commitment=fish_commitment).save()
-        Event(commitment=cash_commitment).save()
+        # Sometime in the future; the following events happen
+
+        increment_event = IncrementEvent(**{
+            'resource': self.cash,
+            'providing_agent': self.daryl,
+            'quantity': 9.95
+            })
+        increment_event.save()
+
+        # Order should _still_ be incomplete
+        self.assertFalse(fish_order.is_done())
+
+        decrement_event = DecrementEvent(**{
+            'resource': self.fish,
+            'receiving_agent': self.daryl,
+            'quantity': 3
+            })
+        decrement_event.save()
+
+        # Order should _still_ be incomplete
+        self.assertFalse(fish_order.is_done())
+
+        reconcile_sale = ReconciliationInitiator(**{
+            'event': increment_comittment,
+            'value': 9.95,
+            'unbalanced_value': 0
+            })
+        reconcile_sale.save()
+        reconcile_sale.events.add(increment_event)
+        reconcile_sale.is_reconciled = True
+        reconcile_sale.save()
+
+        reconcile_payment = ReconciliationTerminator(**{
+            'event': increment_event,
+            'value': 9.95,
+            'unbalanced_value': 0,
+            'is_reconciled': True
+            })
+        reconcile_payment.save()
+        reconcile_payment.events.add(increment_comittment)
+        reconcile_payment.save()
+
 
         # Okay, OMG, the existance of these events means we're sorted
         self.assertTrue(fish_order.is_done())
