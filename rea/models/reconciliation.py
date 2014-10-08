@@ -2,10 +2,10 @@ from itertools import chain
 
 from django.db import models
 
-from polymorphic import PolymorphicModel
+from . import REAObject
 
 
-class Reconciliation(PolymorphicModel):
+class Reconciliation(REAObject):
     '''
     Reconicile an Commitment or Event against other comparable
     Commitments or Events
@@ -20,7 +20,7 @@ class Reconciliation(PolymorphicModel):
 
     value = models.FloatField()
     unbalanced_value = models.FloatField()
-    
+
     is_reconciled = models.BooleanField(
         default=False)
 

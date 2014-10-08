@@ -3,11 +3,11 @@ from django.utils.functional import cached_property
 
 from polymorphic import PolymorphicModel
 
-from . import IncrementLineMixin, DecrementLineMixin
+from . import IncrementLineMixin, DecrementLineMixin, REAObject
 from ..settings import *
 
 
-class Event(PolymorphicModel):
+class Event(REAObject):
     '''
     The REA Event object forms the Economic System Ledger.
 

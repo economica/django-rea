@@ -21,5 +21,6 @@ setup( name='django-rea',
         'Django>=1.7',
         'django-polymorphic',
         'django-xworkflows',
+        'django-uuidfield',
     ]
 )
