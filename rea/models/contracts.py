@@ -3,7 +3,6 @@ import logging
 from django.db import models
 
 from django_xworkflows import models as xwf_models
-from polymorphic import PolymorphicModel
 
 from entropy.base import (
     TitleMixin, SlugMixin
@@ -16,10 +15,12 @@ from .reconciliation import Reconciliation
 from .commitments import *
 from .events import *
 
+from . import REAObject
+
 logger = logging.getLogger(__name__)
 
 
-class Contract(PolymorphicModel):
+class Contract(REAObject):
     '''
     The simplest form of an REA Contract binds Commitments 
     that increase and decrease economic resource in corresponding

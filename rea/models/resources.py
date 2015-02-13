@@ -1,11 +1,11 @@
 from django.db import models
 
-from polymorphic import PolymorphicModel
+from . import REAObject
 
 from entropy.base import NameMixin, SlugMixin
 
 
-class Resource(PolymorphicModel, NameMixin, SlugMixin):
+class Resource(REAObject, NameMixin, SlugMixin):
     pass
 
 

@@ -1,10 +1,9 @@
 from django.db import models
 
-from polymorphic import PolymorphicModel
+from . import REAObject
 
 
-
-class Reconciliation(PolymorphicModel):
+class Reconciliation(REAObject):
     '''
     Reconicile an Commitment or Event against other comparable
     Commitments or Events
@@ -23,12 +22,11 @@ class Reconciliation(PolymorphicModel):
     # possibly can be determined automatically
     unbalanced_value = models.FloatField() 
 
-    # system user can override and declare reconciliation
-    marked_reconciled = models.BooleanField(
-        default=False)
+    # # system user can override and declare reconciliation
+    # marked_reconciled = models.BooleanField(
+    #     default=False)
 
     def is_reconciled(self):
-        # import ipdb; ipdb.set_trace()
         return self.marked_reconciled or self.event.quantity <= sum([event.quantity for event in self.events.all()])
 
 

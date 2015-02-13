@@ -1,22 +1,50 @@
 from django.test import TestCase
 from rea.models import (
-    Agent, 
+    Agent,
     Commitment,
-    DecrementCommitment, 
+    DecrementCommitment,
     DecrementEvent,
     Event,
     IncrementCommitment,
     IncrementEvent,
-    Resource, 
+    Resource,
     ReconciliationInitiator,
     ReconciliationTerminator,
-    SalesOrder, 
+    SalesOrder,
+    REAObject
 )
 
 
 class SimpleTestCase(TestCase):
     def test_addition(self):
         self.assertEqual(1 + 1, 2)
+
+
+class REAObjectTest(TestCase):
+
+    def setUp(self):
+        # 10
+        for x in range(5):
+            Agent.objects.create()
+            Resource.objects.create(title='Resource %s' % x)
+
+        # 11
+        self.order = SalesOrder.objects.create(**{
+            'receiving_agent': Agent.objects.order_by('?')[0],
+            'providing_agent': Agent.objects.order_by('?')[0]
+        })
+
+    def test_rea_object_selection(self):
+        self.assertEqual(REAObject.objects.count(), 11)
+
+    def test_object_selection(self):
+        order = REAObject.objects.get(uuid=self.order.uuid)
+        self.assertEqual(type(order), SalesOrder)
+
+    def test_referential_integrity(self):
+        with self.assertRaises(ValueError):
+            # Should fail because providing_agent is an FK to the `rea.Agent` type
+            self.order.providing_agent = Resource.objects.create(title='Fake Resource')
 
 
 class SalesOrderTest(TestCase):
@@ -32,10 +60,13 @@ class SalesOrderTest(TestCase):
         self.daryl = Agent.objects.create(name='Daryl Antony', slug='daryl')
         self.brenton = Agent.objects.create(name='Brenton Cleeland', slug='brenton')
 
-
     def test_agent_creation(self):
         # OK, we should have two agents in our system at this point
         self.assertEqual(Agent.objects.count(), 2)
+
+
+    def test_resource_creation(self):
+        self.assertEqual(Resource.objects.count(), 2)
 
 
     def test_sales_order(self):
@@ -51,15 +82,15 @@ class SalesOrderTest(TestCase):
         # Fish Commitment
         decrement_comittment = DecrementCommitment.objects.create(
             contract=fish_order,
-            resource=self.fish, 
-            quantity=3, 
+            resource=self.fish,
+            quantity=3,
             receiving_agent=self.daryl)
-        
+
         # Cash Commitment
         increment_comittment = IncrementCommitment.objects.create(
             contract=fish_order,
-            resource=self.cash, 
-            quantity=9.95, 
+            resource=self.cash,
+            quantity=9.95,
             providing_agent=self.daryl)
 
         # Order should _still_ be incomplete

@@ -6,14 +6,14 @@ from .events import Event
 
 class Commitment(Event):
     '''
-    The Commitment model expresses a future reciprocity of the 
+    The Commitment model expresses a future reciprocity of the
     Economic Event between two Agents.
 
     The Commitment object is related to a Contract instance
     which is a Workflow or Finite State Machine model.
 
-    The Comittment object differs from the Event object in that 
-    it houses the Reciprocity of the Commitment Increment Line && 
+    The Comittment object differs from the Event object in that
+    it houses the Reciprocity of the Commitment Increment Line &&
     the Commitment Decrement Line in an instantiated expresion of that
     Reciprocity.
     '''
@@ -25,10 +25,10 @@ class Commitment(Event):
 
 class IncrementCommitment(Commitment, IncrementLineMixin):
     '''
-    The Increment Commitment Line depicts an increase in Resource to 
+    The Increment Commitment Line depicts an increase in Resource to
     the Economic Agent that is the protagonist of the Economic system.
 
-    The Increment Line is usually modelled from the perspective of the 
+    The Increment Line is usually modelled from the perspective of the
     Providing Agent / Reporting Agent
     '''
 
