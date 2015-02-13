@@ -1,7 +1,7 @@
 from polymorphic import PolymorphicModel
 
-from entropy.base import SlugMixin, TitleMixin
+from entropy.base import NameMixin, SlugMixin
 
 
-class Agent(PolymorphicModel, SlugMixin, TitleMixin):
+class Agent(PolymorphicModel, NameMixin, SlugMixin):
     pass

@@ -38,7 +38,8 @@ class IncrementCommitment(Commitment, IncrementLineMixin):
     # quantity
     # providing_agent
 
-    pass
+    def is_reconciled():
+        raise NotImplemented
 
 
 class DecrementCommitment(Commitment, DecrementLineMixin):
@@ -54,4 +55,5 @@ class DecrementCommitment(Commitment, DecrementLineMixin):
     # quantity
     # receiving_agent
 
-    pass
+    def is_fulfilled():
+        raise NotImplemented

@@ -23,14 +23,14 @@ class SalesOrderTest(TestCase):
     def setUp(self):
         # Resources
         # XXX: Daryl, should resources have some concept of ownership? Do we do that wish
-        # an event somewhere?
+        # an event somewhere?  Brenton: Ownership is shown by Accounts, as in Chart of Accounts
         # XXX: How is initial state represented?
-        self.fish = Resource.objects.create(title='Fish')
-        self.cash = Resource.objects.create(title='AUD')
+        self.fish = Resource.objects.create(name='Fish')
+        self.cash = Resource.objects.create(name='AUD')
 
         # Agents
-        self.daryl = Agent.objects.create(title='Daryl Antony', slug='daryl')
-        self.brenton = Agent.objects.create(title='Brenton Cleeland', slug='brenton')
+        self.daryl = Agent.objects.create(name='Daryl Antony', slug='daryl')
+        self.brenton = Agent.objects.create(name='Brenton Cleeland', slug='brenton')
 
 
     def test_agent_creation(self):
@@ -41,8 +41,8 @@ class SalesOrderTest(TestCase):
     def test_sales_order(self):
         fish_order = SalesOrder()
         
-        fish_order.receiving_agent = self.daryl  # Customer
-        fish_order.providing_agent = self.brenton # Reporting Agent
+        fish_order.recipient = self.daryl  # Customer
+        fish_order.provider = self.brenton # Reporting Agent
         fish_order.save()
 
         # Order should be incomplete
@@ -66,7 +66,6 @@ class SalesOrderTest(TestCase):
         self.assertFalse(fish_order.is_done())
 
         # Sometime in the future; the following events happen
-
         increment_event = IncrementEvent(**{
             'resource': self.cash,
             'providing_agent': self.daryl,
@@ -94,14 +93,15 @@ class SalesOrderTest(TestCase):
             })
         reconcile_sale.save()
         reconcile_sale.events.add(increment_event)
-        reconcile_sale.is_reconciled = True
         reconcile_sale.save()
+
+        self.assertTrue(reconcile_sale.is_reconciled())
+
 
         reconcile_payment = ReconciliationTerminator(**{
             'event': increment_event,
             'value': 9.95,
-            'unbalanced_value': 0,
-            'is_reconciled': True
+            'unbalanced_value': 0
             })
         reconcile_payment.save()
         reconcile_payment.events.add(increment_comittment)

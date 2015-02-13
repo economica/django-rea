@@ -1,8 +1,7 @@
-from itertools import chain
-
 from django.db import models
 
 from polymorphic import PolymorphicModel
+
 
 
 class Reconciliation(PolymorphicModel):
@@ -18,24 +17,19 @@ class Reconciliation(PolymorphicModel):
         'rea.Event',
         related_name='%(app_label)s_%(class)s_events')
 
+    # value is specified manually by system user
     value = models.FloatField()
-    unbalanced_value = models.FloatField()
-    
-    is_reconciled = models.BooleanField(
+
+    # possibly can be determined automatically
+    unbalanced_value = models.FloatField() 
+
+    # system user can override and declare reconciliation
+    marked_reconciled = models.BooleanField(
         default=False)
 
-    # def save(self):
-    #     '''
-    #     Check that all events are
-    #     the same type of comparable Resource
-    #     '''
-    #     super(Reconciliation, self).save()
-
-        # resource_class = self.event.resource.__class__
-        # for event in self.events:
-        #     if event.resource.__class__ != resource_class:
-        #         return
-
+    def is_reconciled(self):
+        # import ipdb; ipdb.set_trace()
+        return self.marked_reconciled or self.event.quantity <= sum([event.quantity for event in self.events.all()])
 
 
 class ReconciliationInitiator(Reconciliation):
@@ -43,18 +37,17 @@ class ReconciliationInitiator(Reconciliation):
     The Initiator Reconciliation object should be related
     to a corresponding Terminator
     '''
-    terminator = models.ForeignKey(
-        'ReconciliationTerminator',
-        null=True
-    )
+    pass
 
 
 class ReconciliationTerminator(Reconciliation):
     '''
-    The Initiator Reconciliation object should be related
-    to a corresponding Terminator
+    The Terminator Reconciliation object may relate
+    to many Initiators and vice versa
     '''
-    initiator = models.ForeignKey(
+    initiators = models.ManyToManyField(
         'ReconciliationInitiator',
+        related_name='terminators',
         null=True
     )
+

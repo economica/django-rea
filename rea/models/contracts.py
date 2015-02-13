@@ -19,47 +19,65 @@ from .events import *
 logger = logging.getLogger(__name__)
 
 
-class Contract(PolymorphicModel, TitleMixin, SlugMixin):
+class Contract(PolymorphicModel):
+    '''
+    The simplest form of an REA Contract binds Commitments 
+    that increase and decrease economic resource in corresponding
+    outflows & inflows.
 
-    # title
-    # short_title
-    # slug
+    The providing & receiving agents are implied by the commitment
+    lines.
 
-    receiving_agent = models.ForeignKey(
+    The basic contract should specify at least the Reporting Agent 
+    of the system; as the provider of outflows; and Recipient Agent
+    
+    The `provider` defaults to the Reporting Agent model class & ID 
+    as specified in the rea.settings; which is optionally overriden
+    during implementation.
+    '''
+
+    # Contract.provider
+    provider = models.ForeignKey(
+        REA_REPORTING_AGENT_MODEL,
+        default=REA_REPORTING_AGENT_ID,
+        related_name='%(app_label)s_%(class)s_providers')
+
+    # Contract.recipient
+    recipient = models.ForeignKey(
         REA_RECEIVING_AGENT_MODEL,
-        related_name='%(app_label)s_%(class)s_receiving_agent'
-    )
-    providing_agent = models.ForeignKey(
-        REA_PROVIDING_AGENT_MODEL,
-        related_name='%(app_label)s_%(class)s_providing_agent'
-    )
+        related_name='%(app_label)s_%(class)s_recipients')
+
 
     def is_done(self):
+        raise NotImplemented('Contract rules need to be provided during implementation')
 
 
 
-        return NotImplemented()
+class SalesOrder(Contract, TitleMixin, SlugMixin):
 
-
-class SalesOrder(Contract):
 
     def is_done(self):
         '''
         Sales Order is considered done when Payment has been reconciled
         against the Sale and the Product has been fulfilled.
         '''
+        is_done = False
 
         commitments = self.commitment_set.all()
         for commitment in commitments:
             if commitment.__class__ == IncrementCommitment:
 
+                # commitment.is_reconciled()
+
                 try:
-                    # import ipdb; ipdb.set_trace()
                     reconciliation = Reconciliation.objects.get(event=commitment)
                 except Reconciliation.DoesNotExist:
-                    return False
+                    is_done = False
+                else:
+                    is_done = reconciliation.is_reconciled
 
-                return reconciliation.is_reconciled
+            if commitment.__class__ == DecrementCommitment:
+                pass
+                # @@@ implement
 
-
-        return False
+        return is_done
