@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from .models import (
+from rea.models import (
     Agent,
     # Commitment,
     # DecrementCommitment,
