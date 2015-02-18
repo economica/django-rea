@@ -30,9 +30,9 @@ REA_REPORTING_AGENT_ID = getattr(
 )
 
 REA_REPORTING_AGENT_MODEL = getattr(
-	settings,
-	'REA_REPORTING_AGENT_MODEL',
-	'rea.Agent'
+    settings,
+    'REA_REPORTING_AGENT_MODEL',
+    'rea.Agent'
 )
 
 # XXX include this later

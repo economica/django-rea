@@ -1,52 +1,52 @@
-import os, sys
-from django import setup
-from django.conf import settings, global_settings
+#!/usr/bin/env python
 
-# Default settings for Django 1.7 applications
-INSTALLED_APPS = (
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-)
+import sys
 
-DATABASES={
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite3',
+import django
+from django.conf import settings
+from django.test.utils import get_runner
+
+
+if __name__ == "__main__":
+    INSTALLED_APPS = (
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+    )
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3'
+        }
     }
-}
 
-MIDDLEWARE_CLASSES = (
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
+    MIDDLEWARE_CLASSES = (
+        'django.contrib.sessions.middleware.SessionMiddleware',
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'django.contrib.auth.middleware.AuthenticationMiddleware',
+        'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+        'django.contrib.messages.middleware.MessageMiddleware',
+        'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    )
 
-ROOT_URLCONF = 'rea.urls'
+    SECRET_KEY = 'fake-key'
 
+    # Our settings for test execution
+    settings.configure(
+        DATABASES=DATABASES,
+        DEBUG=True,
+        INSTALLED_APPS=INSTALLED_APPS + ('rea', ),
+        MIDDLEWARE_CLASSES=MIDDLEWARE_CLASSES,
+        SECRET_KEY=SECRET_KEY
+    )
 
-# Our settings for test execution
-settings.configure(
-    DEBUG=True,
-    DATABASES=DATABASES,
-    MIDDLEWARE_CLASSES=MIDDLEWARE_CLASSES,
-    INSTALLED_APPS=INSTALLED_APPS + ('rea',)
-)
+    django.setup()
 
-setup()
-
-from django.test.runner import DiscoverRunner
-from django.db import connection
-
-test_runner = DiscoverRunner(verbosity=1)
-failures = test_runner.run_tests(['rea', ])
-
-if failures:
-    sys.exit(failures)
+    TestRunner = get_runner(settings)
+    test_runner = TestRunner()
+    failures = test_runner.run_tests(['rea'])
+    sys.exit(bool(failures))

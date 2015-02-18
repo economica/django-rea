@@ -1,6 +1,7 @@
 from django.db import models
 
-from . import IncrementLineMixin, DecrementLineMixin
+from ..mixins import IncrementLineMixin, DecrementLineMixin
+
 from .events import Event
 
 

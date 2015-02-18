@@ -1,3 +1,6 @@
+from django.db import models
+
+from entropy.base import TitleMixin, TextMixin, OrderingMixin
 from polymorphic import PolymorphicModel
 
 
@@ -41,7 +44,7 @@ class ClauseRuleAspect(PolymorphicModel):
 class ContractClause(PolymorphicModel, OrderingMixin):
     '''
     Contract Clause
-    
+
     '''
     # order / ordering
 
@@ -59,9 +62,9 @@ class ContractInstanceClause(PolymorphicModel, OrderingMixin):
     clause = models.ForeignKey('Clause')
 
 
-# 
+#
 # Clause Rules Library
-# 
+#
 
 class PaymentReceived(ClauseRuleAspect):
 

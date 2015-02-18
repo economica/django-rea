@@ -1,10 +1,10 @@
 from django.test import TestCase
 from rea.models import (
     Agent,
-    Commitment,
-    DecrementCommitment,
+    # Commitment,
+    # DecrementCommitment,
     DecrementEvent,
-    Event,
+    # Event,
     IncrementCommitment,
     IncrementEvent,
     Resource,
@@ -43,48 +43,55 @@ class REAObjectTest(TestCase):
 
     def test_referential_integrity(self):
         with self.assertRaises(ValueError):
-            # Should fail because providing_agent is an FK to the `rea.Agent` type
-            self.order.providing_agent = Resource.objects.create(title='Fake Resource')
+            # Should fail because providing_agent is an FK to the `rea.Agent`
+            # type
+            self.order.providing_agent = Resource.objects.create(
+                title='Fake Resource'
+            )
 
 
 class SalesOrderTest(TestCase):
     def setUp(self):
         # Resources
-        # XXX: Daryl, should resources have some concept of ownership? Do we do that wish
-        # an event somewhere?  Brenton: Ownership is shown by Accounts, as in Chart of Accounts
+        # XXX: Daryl, should resources have some concept of ownership? Do we
+        # do that wish an event somewhere?  Brenton: Ownership is shown by
+        # Accounts, as in Chart of Accounts
         # XXX: How is initial state represented?
         self.fish = Resource.objects.create(name='Fish')
         self.cash = Resource.objects.create(name='AUD')
 
         # Agents
         self.daryl = Agent.objects.create(name='Daryl Antony', slug='daryl')
-        self.brenton = Agent.objects.create(name='Brenton Cleeland', slug='brenton')
+        self.brenton = Agent.objects.create(
+            name='Brenton Cleeland',
+            slug='brenton'
+        )
 
     def test_agent_creation(self):
         # OK, we should have two agents in our system at this point
         self.assertEqual(Agent.objects.count(), 2)
 
-
     def test_resource_creation(self):
         self.assertEqual(Resource.objects.count(), 2)
 
-
     def test_sales_order(self):
         fish_order = SalesOrder()
-        
+
         fish_order.recipient = self.daryl  # Customer
-        fish_order.provider = self.brenton # Reporting Agent
+        fish_order.provider = self.brenton  # Reporting Agent
         fish_order.save()
 
         # Order should be incomplete
         self.assertFalse(fish_order.is_done())
 
         # Fish Commitment
+        '''
         decrement_comittment = DecrementCommitment.objects.create(
             contract=fish_order,
             resource=self.fish,
             quantity=3,
             receiving_agent=self.daryl)
+        '''
 
         # Cash Commitment
         increment_comittment = IncrementCommitment.objects.create(
@@ -128,7 +135,6 @@ class SalesOrderTest(TestCase):
 
         self.assertTrue(reconcile_sale.is_reconciled())
 
-
         reconcile_payment = ReconciliationTerminator(**{
             'event': increment_event,
             'value': 9.95,
@@ -137,7 +143,6 @@ class SalesOrderTest(TestCase):
         reconcile_payment.save()
         reconcile_payment.events.add(increment_comittment)
         reconcile_payment.save()
-
 
         # Okay, OMG, the existance of these events means we're sorted
         self.assertTrue(fish_order.is_done())
