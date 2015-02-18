@@ -24,9 +24,8 @@ class Reconciliation(REAObject):
     # possibly can be determined automatically
     unbalanced_value = models.FloatField()
 
-    # # system user can override and declare reconciliation
-    # marked_reconciled = models.BooleanField(
-    #     default=False)
+    # system user can override and declare reconciliation
+    marked_reconciled = models.BooleanField(default=False)
 
     def is_reconciled(self):
         return self.marked_reconciled or self.event.quantity <= sum(

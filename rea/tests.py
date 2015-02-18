@@ -1,5 +1,6 @@
 from django.test import TestCase
-from rea.models import (
+
+from .models import (
     Agent,
     # Commitment,
     # DecrementCommitment,
@@ -15,23 +16,17 @@ from rea.models import (
 )
 
 
-class SimpleTestCase(TestCase):
-    def test_addition(self):
-        self.assertEqual(1 + 1, 2)
-
-
 class REAObjectTest(TestCase):
-
     def setUp(self):
         # 10
         for x in range(5):
             Agent.objects.create()
-            Resource.objects.create(title='Resource %s' % x)
+            Resource.objects.create(name='Resource %s' % x)
 
         # 11
         self.order = SalesOrder.objects.create(**{
-            'receiving_agent': Agent.objects.order_by('?')[0],
-            'providing_agent': Agent.objects.order_by('?')[0]
+            'recipient': Agent.objects.order_by('?')[0],
+            'provider': Agent.objects.order_by('?')[0]
         })
 
     def test_rea_object_selection(self):
@@ -45,9 +40,7 @@ class REAObjectTest(TestCase):
         with self.assertRaises(ValueError):
             # Should fail because providing_agent is an FK to the `rea.Agent`
             # type
-            self.order.providing_agent = Resource.objects.create(
-                title='Fake Resource'
-            )
+            self.order.provider = Resource.objects.create(name='Fake Resource')
 
 
 class SalesOrderTest(TestCase):
@@ -90,7 +83,8 @@ class SalesOrderTest(TestCase):
             contract=fish_order,
             resource=self.fish,
             quantity=3,
-            receiving_agent=self.daryl)
+            receiving_agent=self.daryl
+        )
         '''
 
         # Cash Commitment
@@ -98,7 +92,8 @@ class SalesOrderTest(TestCase):
             contract=fish_order,
             resource=self.cash,
             quantity=9.95,
-            providing_agent=self.daryl)
+            providing_agent=self.daryl
+        )
 
         # Order should _still_ be incomplete
         self.assertFalse(fish_order.is_done())
@@ -108,7 +103,7 @@ class SalesOrderTest(TestCase):
             'resource': self.cash,
             'providing_agent': self.daryl,
             'quantity': 9.95
-            })
+        })
         increment_event.save()
 
         # Order should _still_ be incomplete
@@ -118,7 +113,7 @@ class SalesOrderTest(TestCase):
             'resource': self.fish,
             'receiving_agent': self.daryl,
             'quantity': 3
-            })
+        })
         decrement_event.save()
 
         # Order should _still_ be incomplete
@@ -128,7 +123,7 @@ class SalesOrderTest(TestCase):
             'event': increment_comittment,
             'value': 9.95,
             'unbalanced_value': 0
-            })
+        })
         reconcile_sale.save()
         reconcile_sale.events.add(increment_event)
         reconcile_sale.save()
@@ -139,7 +134,7 @@ class SalesOrderTest(TestCase):
             'event': increment_event,
             'value': 9.95,
             'unbalanced_value': 0
-            })
+        })
         reconcile_payment.save()
         reconcile_payment.events.add(increment_comittment)
         reconcile_payment.save()
