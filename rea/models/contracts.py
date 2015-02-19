@@ -2,8 +2,6 @@ import logging
 
 from django.db import models
 
-from entropy.base import TitleMixin, SlugMixin
-
 from ..settings import (
     REA_REPORTING_AGENT_MODEL,
     REA_REPORTING_AGENT_ID,
@@ -52,7 +50,7 @@ class Contract(REAObject):
         )
 
 
-class SalesOrder(Contract, TitleMixin, SlugMixin):
+class SalesOrder(Contract):
     def is_done(self):
         '''
         Sales Order is considered done when Payment has been reconciled

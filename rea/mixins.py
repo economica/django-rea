@@ -1,6 +1,18 @@
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 from .settings import REA_RECEIVING_AGENT_MODEL, REA_PROVIDING_AGENT_MODEL
+
+
+@python_2_unicode_compatible
+class NameMixin(models.Model):
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.name
 
 
 class LineMixin(models.Model):

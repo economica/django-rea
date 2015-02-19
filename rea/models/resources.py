@@ -1,11 +1,10 @@
 from django.db import models
 
-from entropy.base import NameMixin, SlugMixin
-
+from ..mixins import NameMixin
 from .base import REAObject
 
 
-class Resource(REAObject, NameMixin, SlugMixin):
+class Resource(REAObject, NameMixin):
     pass
 
 
