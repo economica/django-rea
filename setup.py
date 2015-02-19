@@ -8,7 +8,9 @@ setup(
     author_email='daryl@economica.io',
     url='https://github.com/economica/rea',
     keywords=['django', ],
-    packages=find_packages(),
+    packages=find_packages(
+        exclude=['*.tests', '*.tests.*', 'tests.*', 'tests']
+    ),
     include_package_data=True,
     zip_safe=False,
     classifiers=[
