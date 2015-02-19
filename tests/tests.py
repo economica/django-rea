@@ -1,9 +1,8 @@
 from django.test import TestCase
 
 from rea.models import (
-    Agent,
     # Commitment,
-    # DecrementCommitment,
+    DecrementCommitment,
     DecrementEvent,
     # Event,
     IncrementCommitment,
@@ -15,18 +14,20 @@ from rea.models import (
     REAObject
 )
 
+from .models import Person
+
 
 class REAObjectTest(TestCase):
     def setUp(self):
         # 10
         for x in range(5):
-            Agent.objects.create()
+            Person.objects.create()
             Resource.objects.create(name='Resource %s' % x)
 
         # 11
         self.order = SalesOrder.objects.create(**{
-            'recipient': Agent.objects.order_by('?')[0],
-            'provider': Agent.objects.order_by('?')[0]
+            'recipient': Person.objects.order_by('?')[0],
+            'provider': Person.objects.order_by('?')[0]
         })
 
     def test_rea_object_selection(self):
@@ -54,90 +55,106 @@ class SalesOrderTest(TestCase):
         self.cash = Resource.objects.create(name='AUD')
 
         # Agents
-        self.daryl = Agent.objects.create(name='Daryl Antony', slug='daryl')
-        self.brenton = Agent.objects.create(
+        self.daryl = Person.objects.create(name='Daryl Antony', slug='daryl')
+        self.brenton = Person.objects.create(
             name='Brenton Cleeland',
             slug='brenton'
         )
 
+        # Order
+        self.order = SalesOrder.objects.create(
+            recipient=self.daryl,  # Customer
+            provider=self.brenton  # Reporting Agent
+        )
+
     def test_agent_creation(self):
         # OK, we should have two agents in our system at this point
-        self.assertEqual(Agent.objects.count(), 2)
+        self.assertEqual(Person.objects.count(), 2)
 
     def test_resource_creation(self):
         self.assertEqual(Resource.objects.count(), 2)
 
-    def test_sales_order(self):
-        fish_order = SalesOrder()
-
-        fish_order.recipient = self.daryl  # Customer
-        fish_order.provider = self.brenton  # Reporting Agent
-        fish_order.save()
-
+    def test_order_creation(self):
         # Order should be incomplete
-        self.assertFalse(fish_order.is_done())
+        self.assertEqual(SalesOrder.objects.count(), 1)
 
-        # Fish Commitment
-        '''
+    def test_reconciliation(self):
         decrement_comittment = DecrementCommitment.objects.create(
-            contract=fish_order,
+            contract=self.order,
             resource=self.fish,
             quantity=3,
             receiving_agent=self.daryl
         )
-        '''
+
+        s01 = DecrementEvent.objects.create(
+            resource=self.fish,
+            receiving_agent=self.daryl,
+            quantity=1
+        )
+        s02 = DecrementEvent.objects.create(
+            resource=self.fish,
+            receiving_agent=self.daryl,
+            quantity=1
+        )
+        s03 = DecrementEvent.objects.create(
+            resource=self.fish,
+            receiving_agent=self.daryl,
+            quantity=1
+        )
+
+        initiator = ReconciliationInitiator.objects.create(
+            event=decrement_comittment,
+            value=9.95,
+            unbalanced_value=0
+        )
+        initiator.events.add(s01, s02, s03)
+        initiator.save()
+
+        self.assertTrue(
+            initiator.is_reconciled(),
+            'ReconciliationInitiator is not reconciled'
+        )
 
         # Cash Commitment
         increment_comittment = IncrementCommitment.objects.create(
-            contract=fish_order,
+            contract=self.order,
             resource=self.cash,
             quantity=9.95,
             providing_agent=self.daryl
         )
 
-        # Order should _still_ be incomplete
-        self.assertFalse(fish_order.is_done())
-
         # Sometime in the future; the following events happen
-        increment_event = IncrementEvent(**{
-            'resource': self.cash,
-            'providing_agent': self.daryl,
-            'quantity': 9.95
-        })
-        increment_event.save()
+        p01 = IncrementEvent.objects.create(
+            resource=self.cash,
+            providing_agent=self.daryl,
+            quantity=3
+        )
+        p02 = IncrementEvent.objects.create(
+            resource=self.cash,
+            providing_agent=self.daryl,
+            quantity=4
+        )
+        p03 = IncrementEvent.objects.create(
+            resource=self.cash,
+            providing_agent=self.daryl,
+            quantity=2.95
+        )
 
-        # Order should _still_ be incomplete
-        self.assertFalse(fish_order.is_done())
+        terminator = ReconciliationTerminator.objects.create(
+            event=increment_comittment,
+            value=3,
+            unbalanced_value=0
+        )
+        terminator.events.add(p01, p02, p03)
+        terminator.save()
 
-        decrement_event = DecrementEvent(**{
-            'resource': self.fish,
-            'receiving_agent': self.daryl,
-            'quantity': 3
-        })
-        decrement_event.save()
-
-        # Order should _still_ be incomplete
-        self.assertFalse(fish_order.is_done())
-
-        reconcile_sale = ReconciliationInitiator(**{
-            'event': increment_comittment,
-            'value': 9.95,
-            'unbalanced_value': 0
-        })
-        reconcile_sale.save()
-        reconcile_sale.events.add(increment_event)
-        reconcile_sale.save()
-
-        self.assertTrue(reconcile_sale.is_reconciled())
-
-        reconcile_payment = ReconciliationTerminator(**{
-            'event': increment_event,
-            'value': 9.95,
-            'unbalanced_value': 0
-        })
-        reconcile_payment.save()
-        reconcile_payment.events.add(increment_comittment)
-        reconcile_payment.save()
+        self.assertTrue(
+            terminator.is_reconciled(),
+            'ReconciliationTerminator is not reconciled'
+        )
 
         # Okay, OMG, the existance of these events means we're sorted
-        self.assertTrue(fish_order.is_done())
+        self.assertTrue(
+            self.order.is_done(),
+            'One or more Reconciliations are not reconciled'
+        )

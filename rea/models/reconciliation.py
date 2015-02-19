@@ -28,7 +28,7 @@ class Reconciliation(REAObject):
     marked_reconciled = models.BooleanField(default=False)
 
     def is_reconciled(self):
-        return self.marked_reconciled or self.event.quantity <= sum(
+        return self.marked_reconciled or self.event.quantity == sum(
             [event.quantity for event in self.events.all()]
         )
 

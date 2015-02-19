@@ -9,7 +9,7 @@ from ..settings import (
 )
 
 from .base import REAObject
-from .commitments import DecrementCommitment, IncrementCommitment
+# from .commitments import DecrementCommitment, IncrementCommitment
 from .reconciliation import Reconciliation
 
 
@@ -56,12 +56,21 @@ class SalesOrder(Contract):
         Sales Order is considered done when Payment has been reconciled
         against the Sale and the Product has been fulfilled.
         '''
-        is_done = False
 
-        commitments = self.commitment_set.all()
-        for commitment in commitments:
+        reconciliations = []
+
+        for commitment in self.commitment_set.all():
+            try:
+                reconciliation = Reconciliation.objects.get(
+                    event=commitment
+                )
+            except Reconciliation.DoesNotExist:
+                reconciliations.append(False)
+            else:
+                reconciliations.append(reconciliation.is_reconciled())
+
+            '''
             if commitment.__class__ == IncrementCommitment:
-
                 # commitment.is_reconciled()
 
                 try:
@@ -76,5 +85,6 @@ class SalesOrder(Contract):
             if commitment.__class__ == DecrementCommitment:
                 pass
                 # @@@ implement
+            '''
 
-        return is_done
+        return bool(reconciliations) and all(reconciliations)
