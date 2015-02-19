@@ -104,7 +104,7 @@ class SalesOrderTest(TestCase):
 
         initiator = ReconciliationInitiator.objects.create(
             event=decrement_comittment,
-            value=9.95,
+            value=3,
             unbalanced_value=0
         )
         initiator.events.add(s01, s02, s03)
@@ -142,7 +142,7 @@ class SalesOrderTest(TestCase):
 
         terminator = ReconciliationTerminator.objects.create(
             event=increment_comittment,
-            value=3,
+            value=9.95,
             unbalanced_value=0
         )
         terminator.events.add(p01, p02, p03)
