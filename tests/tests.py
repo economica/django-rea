@@ -1,13 +1,14 @@
 from django.test import TestCase
 
 from rea.models import (
-    # Commitment,
+    Conversion,
     DecrementCommitment,
     DecrementEvent,
-    # Event,
     IncrementCommitment,
     IncrementEvent,
     Resource,
+    TimedResource,
+    TimedWork,
     ReconciliationInitiator,
     ReconciliationTerminator,
     SalesOrder,
@@ -79,7 +80,7 @@ class SalesOrderTest(TestCase):
         self.assertEqual(SalesOrder.objects.count(), 1)
 
     def test_reconciliation(self):
-        decrement_comittment = DecrementCommitment.objects.create(
+        decrement_commitment = DecrementCommitment.objects.create(
             contract=self.order,
             resource=self.fish,
             quantity=3,
@@ -103,7 +104,7 @@ class SalesOrderTest(TestCase):
         )
 
         initiator = ReconciliationInitiator.objects.create(
-            event=decrement_comittment,
+            event=decrement_commitment,
             value=3,
             unbalanced_value=0
         )
@@ -116,7 +117,7 @@ class SalesOrderTest(TestCase):
         )
 
         # Cash Commitment
-        increment_comittment = IncrementCommitment.objects.create(
+        increment_commitment = IncrementCommitment.objects.create(
             contract=self.order,
             resource=self.cash,
             quantity=9.95,
@@ -141,7 +142,7 @@ class SalesOrderTest(TestCase):
         )
 
         terminator = ReconciliationTerminator.objects.create(
-            event=increment_comittment,
+            event=increment_commitment,
             value=9.95,
             unbalanced_value=0
         )
@@ -158,3 +159,165 @@ class SalesOrderTest(TestCase):
             self.order.is_done(),
             'One or more Reconciliations are not reconciled'
         )
+
+
+class TimedResourceTest(TestCase):
+    def setUp(self):
+        # Resources
+        self.labour = TimedResource.objects.create(
+            name='Labour',
+            quantity=50,
+            unit=TimedResource.Unit.MINUTE
+        )
+        self.computer = Resource.objects.create(name='Computer')
+        self.application = Resource.objects.create(name='Application')
+        self.cash = Resource.objects.create(name='USD')
+
+        # Agents
+        self.daryl = Person.objects.create(name='Daryl Antony', slug='daryl')
+        self.gam = Person.objects.create(name='Gamaliel', slug='gam')
+
+        # Contract
+        self.contract = TimedWork.objects.create(
+            recipient=self.daryl,  # Customer
+            provider=self.gam  # Reporting Agent
+        )
+
+        # commitments
+        self.commitments = {
+            'decrement': DecrementCommitment.objects.create(
+                contract=self.contract,
+                resource=self.application,
+                quantity=1,
+                receiving_agent=self.daryl
+            ),
+            'increment': IncrementCommitment.objects.create(
+                contract=self.contract,
+                resource=self.cash,
+                quantity=5000,
+                providing_agent=self.daryl
+            )
+        }
+
+    def test_agent_creation(self):
+        self.assertEqual(Person.objects.count(), 2)
+
+    def test_resource_creation(self):
+        self.assertEqual(Resource.objects.count(), 4)
+
+    def test_contract_creation(self):
+        self.assertEqual(TimedWork.objects.count(), 1)
+
+    def test_commitments_creation(self):
+        self.assertEqual(DecrementCommitment.objects.count(), 1)
+        self.assertEqual(IncrementCommitment.objects.count(), 1)
+
+    def test_timed_work(self):
+        worked_hours = [
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daryl,
+                quantity=8
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daryl,
+                quantity=10
+            ),
+
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daryl,
+                quantity=8
+            ),
+
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daryl,
+                quantity=9
+            ),
+
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daryl,
+                quantity=6
+            ),
+
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daryl,
+                quantity=12
+            )
+        ]
+
+        application_conversion = IncrementEvent.objects.create(
+            resource=self.application,
+            providing_agent=self.gam,
+            quantity=1
+        )
+
+        conversion = Conversion.objects.create()
+        conversion.decrements.add(*worked_hours)
+        conversion.increments.add(application_conversion)
+        conversion.save()
+
+        application_decrement = DecrementEvent.objects.create(
+            resource=self.application,
+            receiving_agent=self.daryl,
+            quantity=1
+        )
+
+        initiator = ReconciliationInitiator.objects.create(
+            event=self.commitments['decrement'],
+            value=1,
+            unbalanced_value=0
+        )
+        initiator.events.add(application_decrement)
+        initiator.save()
+
+        self.assertTrue(initiator.is_reconciled())
+
+        payments = [
+            IncrementEvent.objects.create(
+                resource=self.cash,
+                providing_agent=self.daryl,
+                quantity=500
+            ),
+            IncrementEvent.objects.create(
+                resource=self.cash,
+                providing_agent=self.daryl,
+                quantity=2500
+            ),
+            IncrementEvent.objects.create(
+                resource=self.cash,
+                providing_agent=self.daryl,
+                quantity=1000
+            ),
+            IncrementEvent.objects.create(
+                resource=self.cash,
+                providing_agent=self.daryl,
+                quantity=600
+            ),
+            IncrementEvent.objects.create(
+                resource=self.cash,
+                providing_agent=self.daryl,
+                quantity=300
+            ),
+            IncrementEvent.objects.create(
+                resource=self.cash,
+                providing_agent=self.daryl,
+                quantity=100
+            )
+        ]
+
+        terminator = ReconciliationTerminator.objects.create(
+            event=self.commitments['increment'],
+            value=5000,
+            unbalanced_value=0
+        )
+        terminator.events.add(*payments)
+        terminator.save()
+
+        self.assertTrue(terminator.is_reconciled())
+
+        self.assertTrue(self.contract.is_done())

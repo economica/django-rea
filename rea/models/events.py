@@ -37,3 +37,8 @@ class IncrementEvent(Event, IncrementLineMixin):
     # occured_at
     # resource
     # quantity
+
+
+class Conversion(REAObject):
+    decrements = models.ManyToManyField('DecrementEvent')
+    increments = models.ManyToManyField('IncrementEvent')

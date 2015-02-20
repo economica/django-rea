@@ -9,7 +9,6 @@ from ..settings import (
 )
 
 from .base import REAObject
-# from .commitments import DecrementCommitment, IncrementCommitment
 from .reconciliation import Reconciliation
 
 
@@ -37,12 +36,14 @@ class Contract(REAObject):
     provider = models.ForeignKey(
         REA_REPORTING_AGENT_MODEL,
         default=REA_REPORTING_AGENT_ID,
-        related_name='%(app_label)s_%(class)s_providers')
+        related_name='%(app_label)s_%(class)s_providers'
+    )
 
     # Contract.recipient
     recipient = models.ForeignKey(
         REA_RECEIVING_AGENT_MODEL,
-        related_name='%(app_label)s_%(class)s_recipients')
+        related_name='%(app_label)s_%(class)s_recipients'
+    )
 
     def is_done(self):
         raise NotImplemented(
@@ -69,22 +70,23 @@ class SalesOrder(Contract):
             else:
                 reconciliations.append(reconciliation.is_reconciled())
 
-            '''
-            if commitment.__class__ == IncrementCommitment:
-                # commitment.is_reconciled()
+        return bool(reconciliations) and all(reconciliations)
 
-                try:
-                    reconciliation = Reconciliation.objects.get(
-                        event=commitment
-                    )
-                except Reconciliation.DoesNotExist:
-                    is_done = False
-                else:
-                    is_done = reconciliation.is_reconciled
 
-            if commitment.__class__ == DecrementCommitment:
-                pass
-                # @@@ implement
-            '''
+class TimedWork(Contract):
+    def is_done(self):
+        # XXX How exactly know when the TimeWork is done?
+
+        reconciliations = []
+
+        for commitment in self.commitment_set.all():
+            try:
+                reconciliation = Reconciliation.objects.get(
+                    event=commitment
+                )
+            except Reconciliation.DoesNotExist:
+                reconciliations.append(False)
+            else:
+                reconciliations.append(reconciliation.is_reconciled())
 
         return bool(reconciliations) and all(reconciliations)
