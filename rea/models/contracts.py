@@ -71,22 +71,3 @@ class SalesOrder(Contract):
                 reconciliations.append(reconciliation.is_reconciled())
 
         return bool(reconciliations) and all(reconciliations)
-
-
-class TimedWork(Contract):
-    def is_done(self):
-        # XXX How exactly know when the TimeWork is done?
-
-        reconciliations = []
-
-        for commitment in self.commitment_set.all():
-            try:
-                reconciliation = Reconciliation.objects.get(
-                    event=commitment
-                )
-            except Reconciliation.DoesNotExist:
-                reconciliations.append(False)
-            else:
-                reconciliations.append(reconciliation.is_reconciled())
-
-        return bool(reconciliations) and all(reconciliations)
