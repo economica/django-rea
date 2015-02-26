@@ -100,18 +100,19 @@ class SalesOrderTest(TestCase):
             quantity=1
         )
 
-        initiator = ReconciliationInitiator.objects.create(
+        initiator_01 = ReconciliationInitiator.objects.create(
             event=decrement_commitment,
-            value=3,
             unbalanced_value=0
         )
-        initiator.events.add(s01, s02, s03)
-        initiator.save()
+        initiator_01.events.add(s01, s03)
+        initiator_01.save()
 
-        self.assertTrue(
-            initiator.is_reconciled(),
-            'ReconciliationInitiator is not reconciled'
+        initiator_02 = ReconciliationInitiator.objects.create(
+            event=decrement_commitment,
+            unbalanced_value=0
         )
+        initiator_02.events.add(s02)
+        initiator_02.save()
 
         # Cash Commitment
         increment_commitment = IncrementCommitment.objects.create(
@@ -138,18 +139,19 @@ class SalesOrderTest(TestCase):
             quantity=2.95
         )
 
-        terminator = ReconciliationTerminator.objects.create(
+        terminator_01 = ReconciliationTerminator.objects.create(
             event=increment_commitment,
-            value=9.95,
             unbalanced_value=0
         )
-        terminator.events.add(p01, p02, p03)
-        terminator.save()
+        terminator_01.events.add(p01, p02)
+        terminator_01.save()
 
-        self.assertTrue(
-            terminator.is_reconciled(),
-            'ReconciliationTerminator is not reconciled'
+        terminator_02 = ReconciliationTerminator.objects.create(
+            event=increment_commitment,
+            unbalanced_value=0
         )
+        terminator_02.events.add(p03)
+        terminator_02.save()
 
         # Okay, OMG, the existance of these events means we're sorted
         self.assertTrue(

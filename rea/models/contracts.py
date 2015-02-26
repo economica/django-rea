@@ -58,16 +58,35 @@ class SalesOrder(Contract):
         against the Sale and the Product has been fulfilled.
         '''
 
-        reconciliations = []
+        reconciliations = Reconciliation.objects.filter(
+            event__in=self.commitment_set.all()
+        )
 
-        for commitment in self.commitment_set.all():
-            try:
-                reconciliation = Reconciliation.objects.get(
-                    event=commitment
-                )
-            except Reconciliation.DoesNotExist:
-                reconciliations.append(False)
-            else:
-                reconciliations.append(reconciliation.is_reconciled())
+        return all(
+            reconciliation.is_reconciled for reconciliation in reconciliations
+        )
 
-        return bool(reconciliations) and all(reconciliations)
+        # Leaving this in case we need to handle Initiators / Terminators in
+        # the SalesOrder rather than Reconciliation
+        """
+        reconciled = []
+
+        events = self.commitment_set.all()
+        initiators = Reconciliation.objects.filter(
+            event__in=events,
+            reconciliationinitiator__isnull=False
+        )
+        terminators = Reconciliation.objects.filter(
+            event__in=events,
+            reconciliationterminator__isnull=False
+        )
+
+        reconciled.append(
+            initiator.is_reconciled for initiator in initiators
+        )
+        reconciled.append(
+            terminator.is_reconciled for terminator in terminators
+        )
+
+        return bool(reconciled) and all(reconciled)
+        """
