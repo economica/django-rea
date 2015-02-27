@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from django.db import models
 from django.utils.functional import cached_property
 
@@ -41,9 +39,9 @@ class Reconciliation(REAObject):
     def is_reconciled(self):
         # We could use aggregation here, but since we're using polymorphic
         # classes we must get their actual class first
-        unbalanced = self.value - Decimal(format(sum(
+        unbalanced = self.value - sum(
             event.quantity for event in self.events.all()
-        ), '.4f'))
+        )
 
         if self.unbalanced_value != unbalanced:
             self.unbalanced_value = unbalanced

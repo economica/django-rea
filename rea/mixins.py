@@ -20,7 +20,7 @@ class LineMixin(models.Model):
     Polymorphic Mixin for Increment and Decrement lines
     '''
     resource = models.ForeignKey('rea.Resource')
-    quantity = models.FloatField()
+    quantity = models.DecimalField(max_digits=13, decimal_places=4)
 
     class Meta:
         abstract = True
