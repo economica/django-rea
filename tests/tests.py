@@ -101,15 +101,13 @@ class SalesOrderTest(TestCase):
         )
 
         initiator_01 = ReconciliationInitiator.objects.create(
-            event=decrement_commitment,
-            unbalanced_value=0
+            event=decrement_commitment
         )
         initiator_01.events.add(s01, s03)
         initiator_01.save()
 
         initiator_02 = ReconciliationInitiator.objects.create(
-            event=decrement_commitment,
-            unbalanced_value=0
+            event=decrement_commitment
         )
         initiator_02.events.add(s02)
         initiator_02.save()
@@ -140,21 +138,18 @@ class SalesOrderTest(TestCase):
         )
 
         terminator_01 = ReconciliationTerminator.objects.create(
-            event=increment_commitment,
-            unbalanced_value=0
+            event=increment_commitment
         )
-        terminator_01.events.add(p01, p02)
+        terminator_01.events.add(p01)
+        terminator_01.initiators.add(initiator_01)
         terminator_01.save()
 
         terminator_02 = ReconciliationTerminator.objects.create(
-            event=increment_commitment,
-            unbalanced_value=0
+            event=increment_commitment
         )
-        terminator_02.events.add(p03)
+        terminator_02.events.add(p02, p03)
+        terminator_02.initiators.add(initiator_02)
         terminator_02.save()
 
         # Okay, OMG, the existance of these events means we're sorted
-        self.assertTrue(
-            self.order.is_done(),
-            'One or more Reconciliations are not reconciled'
-        )
+        self.assertTrue(self.order.is_done(), 'SalesOrder is not done')

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.utils.functional import cached_property
 
@@ -19,28 +21,45 @@ class Reconciliation(REAObject):
         related_name='%(app_label)s_%(class)s_events'
     )
 
-    value = models.FloatField()
+    value = models.DecimalField(max_digits=13, decimal_places=4)
 
     # possibly can be determined automatically
-    unbalanced_value = models.FloatField(default=0)
+    unbalanced_value = models.DecimalField(
+        default=0,
+        max_digits=13,
+        decimal_places=4
+    )
 
     # system user can override and declare reconciliation
     marked_reconciled = models.BooleanField(default=False)
 
     class Meta:
         ordering = ('-pk', )
+        get_latest_by = 'pk'
 
     @cached_property
     def is_reconciled(self):
-        unbalanced = self.value - sum(
+        # We could use aggregation here, but since we're using polymorphic
+        # classes we must get their actual class first
+        unbalanced = self.value - Decimal(format(sum(
             event.quantity for event in self.events.all()
-        )
+        ), '.4f'))
 
         if self.unbalanced_value != unbalanced:
             self.unbalanced_value = unbalanced
             self.save()
 
-        return self.unbalanced_value == 0
+        try:
+            # Get the previous Reconciliation
+            prev = Reconciliation.objects.filter(
+                event=self.event,
+                pk__gt=self.pk
+            ).earliest()
+        except Reconciliation.DoesNotExist:
+            return self.unbalanced_value == 0
+        else:
+            prev.value = self.unbalanced_value
+            return prev.is_reconciled
 
     def save(self, *args, **kwargs):
         if not self.pk and not self.value:
@@ -55,20 +74,6 @@ class ReconciliationInitiator(Reconciliation):
     to a corresponding Terminator
     '''
 
-    @cached_property
-    def is_reconciled(self):
-        reconciled = super(self.__class__, self).is_reconciled
-
-        siblings = self.__class__.objects.filter(
-            event=self.event,
-            pk__lt=self.pk
-        )
-
-        if siblings.exists():
-            return all(sibling.is_reconciled for sibling in siblings)
-
-        return reconciled
-
 
 class ReconciliationTerminator(Reconciliation):
     '''
@@ -77,6 +82,5 @@ class ReconciliationTerminator(Reconciliation):
     '''
     initiators = models.ManyToManyField(
         'ReconciliationInitiator',
-        related_name='terminators',
-        null=True
+        related_name='terminators'
     )

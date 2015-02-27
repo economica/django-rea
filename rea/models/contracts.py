@@ -58,6 +58,25 @@ class SalesOrder(Contract):
         against the Sale and the Product has been fulfilled.
         '''
 
+        events = self.commitment_set.all()
+
+        try:
+            initiator = Reconciliation.objects.filter(
+                event__in=events,
+                reconciliationinitiator__isnull=False
+            ).earliest()
+            terminator = Reconciliation.objects.filter(
+                event__in=events,
+                reconciliationterminator__isnull=False
+            ).earliest()
+        except Reconciliation.DoesNotExist:
+            # If SalesOrder lacks of either initiator or negotiator is not done
+            return False
+
+        return initiator.is_reconciled and terminator.is_reconciled
+
+        # We only need the latests Initiator & Terminator
+        """
         reconciliations = Reconciliation.objects.filter(
             event__in=self.commitment_set.all()
         )
@@ -65,6 +84,7 @@ class SalesOrder(Contract):
         return all(
             reconciliation.is_reconciled for reconciliation in reconciliations
         )
+        """
 
         # Leaving this in case we need to handle Initiators / Terminators in
         # the SalesOrder rather than Reconciliation
