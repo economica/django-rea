@@ -4,13 +4,13 @@ from django.conf import settings
 # Depending on the Economic system and the way the Domain Model
 # has been created the Agent Models should be
 # overridden to best describe the environment.
-REA_RECEIVING_AGENT_MODEL = getattr(
+RECEIVING_AGENT_MODEL = getattr(
     settings,
     'REA_RECEIVING_AGENT_MODEL',
     'rea.Agent'
 )
 
-REA_PROVIDING_AGENT_MODEL = getattr(
+PROVIDING_AGENT_MODEL = getattr(
     settings,
     'REA_PROVIDING_AGENT_MODEL',
     'rea.Agent'
@@ -23,13 +23,13 @@ REA_PROVIDING_AGENT_MODEL = getattr(
 #
 # Givent the REA_PROVIDING_AGENT_MODEL, correlate the ID of that
 # record that corresponds to this primary agent.
-REA_REPORTING_AGENT_ID = getattr(
+REPORTING_AGENT_ID = getattr(
     settings,
     'REA_REPORTING_AGENT_ID',
     1
 )
 
-REA_REPORTING_AGENT_MODEL = getattr(
+REPORTING_AGENT_MODEL = getattr(
     settings,
     'REA_REPORTING_AGENT_MODEL',
     'rea.Agent'

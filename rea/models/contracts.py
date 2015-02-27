@@ -3,9 +3,9 @@ import logging
 from django.db import models
 
 from ..settings import (
-    REA_REPORTING_AGENT_MODEL,
-    REA_REPORTING_AGENT_ID,
-    REA_RECEIVING_AGENT_MODEL
+    REPORTING_AGENT_MODEL,
+    REPORTING_AGENT_ID,
+    RECEIVING_AGENT_MODEL
 )
 
 from .base import REAObject
@@ -34,14 +34,14 @@ class Contract(REAObject):
 
     # Contract.provider
     provider = models.ForeignKey(
-        REA_REPORTING_AGENT_MODEL,
-        default=REA_REPORTING_AGENT_ID,
+        REPORTING_AGENT_MODEL,
+        default=REPORTING_AGENT_ID,
         related_name='%(app_label)s_%(class)s_providers'
     )
 
     # Contract.recipient
     recipient = models.ForeignKey(
-        REA_RECEIVING_AGENT_MODEL,
+        RECEIVING_AGENT_MODEL,
         related_name='%(app_label)s_%(class)s_recipients'
     )
 

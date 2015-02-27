@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
-from .settings import REA_RECEIVING_AGENT_MODEL, REA_PROVIDING_AGENT_MODEL
+from .settings import RECEIVING_AGENT_MODEL, PROVIDING_AGENT_MODEL
 
 
 @python_2_unicode_compatible
@@ -28,7 +28,7 @@ class LineMixin(models.Model):
 
 class DecrementLineMixin(LineMixin):
     receiving_agent = models.ForeignKey(
-        REA_RECEIVING_AGENT_MODEL,
+        RECEIVING_AGENT_MODEL,
         related_name='%(app_label)s_%(class)s_reveiving_agents'
     )
 
@@ -38,7 +38,7 @@ class DecrementLineMixin(LineMixin):
 
 class IncrementLineMixin(LineMixin):
     providing_agent = models.ForeignKey(
-        REA_PROVIDING_AGENT_MODEL,
+        PROVIDING_AGENT_MODEL,
         related_name='%(app_label)s_%(class)s_providing_agents'
     )
 
