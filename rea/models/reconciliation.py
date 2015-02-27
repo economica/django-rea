@@ -48,16 +48,16 @@ class Reconciliation(REAObject):
             self.save()
 
         try:
-            # Get the previous Reconciliation
-            prev = Reconciliation.objects.filter(
+            # Get the next newer Reconciliation
+            newer = Reconciliation.objects.filter(
                 event=self.event,
                 pk__gt=self.pk
             ).earliest()
         except Reconciliation.DoesNotExist:
             return self.unbalanced_value == 0
         else:
-            prev.value = self.unbalanced_value
-            return prev.is_reconciled
+            newer.value = self.unbalanced_value
+            return newer.is_reconciled
 
     def save(self, *args, **kwargs):
         if not self.pk and not self.value:
