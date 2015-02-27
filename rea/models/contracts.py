@@ -74,39 +74,3 @@ class SalesOrder(Contract):
             return False
 
         return initiator.is_reconciled and terminator.is_reconciled
-
-        # We only need the latests Initiator & Terminator
-        """
-        reconciliations = Reconciliation.objects.filter(
-            event__in=self.commitment_set.all()
-        )
-
-        return all(
-            reconciliation.is_reconciled for reconciliation in reconciliations
-        )
-        """
-
-        # Leaving this in case we need to handle Initiators / Terminators in
-        # the SalesOrder rather than Reconciliation
-        """
-        reconciled = []
-
-        events = self.commitment_set.all()
-        initiators = Reconciliation.objects.filter(
-            event__in=events,
-            reconciliationinitiator__isnull=False
-        )
-        terminators = Reconciliation.objects.filter(
-            event__in=events,
-            reconciliationterminator__isnull=False
-        )
-
-        reconciled.append(
-            initiator.is_reconciled for initiator in initiators
-        )
-        reconciled.append(
-            terminator.is_reconciled for terminator in terminators
-        )
-
-        return bool(reconciled) and all(reconciled)
-        """
