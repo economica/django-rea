@@ -2,65 +2,75 @@ import logging
 
 from django.db import models
 
-from django_xworkflows import models as xwf_models
-
-from entropy.base import (
-    TitleMixin, SlugMixin
+from ..settings import (
+    REPORTING_AGENT_MODEL,
+    REPORTING_AGENT_ID,
+    RECEIVING_AGENT_MODEL
 )
 
-from ..settings import REA_RECEIVING_AGENT_MODEL, REA_PROVIDING_AGENT_MODEL
-from ..utils import classmaker
-
+from .base import REAObject
 from .reconciliation import Reconciliation
-from .commitments import *
-from .events import *
 
-from . import REAObject
 
 logger = logging.getLogger(__name__)
 
 
-class Contract(REAObject, TitleMixin, SlugMixin):
+class Contract(REAObject):
+    '''
+    The simplest form of an REA Contract binds Commitments
+    that increase and decrease economic resource in corresponding
+    outflows & inflows.
 
-    # title
-    # short_title
-    # slug
+    The providing & receiving agents are implied by the commitment
+    lines.
 
-    receiving_agent = models.ForeignKey(
-        REA_RECEIVING_AGENT_MODEL,
-        related_name='%(app_label)s_%(class)s_receiving_agent'
+    The basic contract should specify at least the Reporting Agent
+    of the system; as the provider of outflows; and Recipient Agent
+
+    The `provider` defaults to the Reporting Agent model class & ID
+    as specified in the rea.settings; which is optionally overriden
+    during implementation.
+    '''
+
+    # Contract.provider
+    provider = models.ForeignKey(
+        REPORTING_AGENT_MODEL,
+        default=REPORTING_AGENT_ID,
+        related_name='%(app_label)s_%(class)s_providers'
     )
-    providing_agent = models.ForeignKey(
-        REA_PROVIDING_AGENT_MODEL,
-        related_name='%(app_label)s_%(class)s_providing_agent'
+
+    # Contract.recipient
+    recipient = models.ForeignKey(
+        RECEIVING_AGENT_MODEL,
+        related_name='%(app_label)s_%(class)s_recipients'
     )
 
     def is_done(self):
-
-
-
-        return NotImplemented()
+        raise NotImplemented(
+            'Contract rules need to be provided during implementation'
+        )
 
 
 class SalesOrder(Contract):
-
     def is_done(self):
         '''
         Sales Order is considered done when Payment has been reconciled
         against the Sale and the Product has been fulfilled.
         '''
 
-        commitments = self.commitment_set.all()
-        for commitment in commitments:
-            if commitment.__class__ == IncrementCommitment:
+        events = self.commitment_set.all()
 
-                try:
-                    # import ipdb; ipdb.set_trace()
-                    reconciliation = Reconciliation.objects.get(event=commitment)
-                except Reconciliation.DoesNotExist:
-                    return False
+        try:
+            initiator = Reconciliation.objects.filter(
+                event__in=events,
+                reconciliationinitiator__isnull=False
+            ).earliest()
+            terminator = Reconciliation.objects.filter(
+                event__in=events,
+                reconciliationterminator__isnull=False
+            ).earliest()
+        except Reconciliation.DoesNotExist:
+            # If SalesOrder lacks of either initiator or negotiator is not done
+            return False
 
-                return reconciliation.is_reconciled
-
-
-        return False
+        return initiator.is_reconciled and terminator.is_reconciled

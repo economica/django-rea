@@ -1,0 +1,5 @@
+# Test requirements
+
+-r base.txt
+
+git+https://github.com/commoncode/entropy.git
