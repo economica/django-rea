@@ -49,8 +49,8 @@ class Reconciliation(REAObject):
 
         try:
             # Get the next newer Reconciliation
-            newer = Reconciliation.objects.filter(
-                event=self.event,
+            newer = self.__class__.objects.filter(
+                event__commitment__contract=self.event.contract,
                 pk__gt=self.pk
             ).earliest()
         except Reconciliation.DoesNotExist:

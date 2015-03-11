@@ -1,6 +1,7 @@
 import logging
 
 from django.db import models
+from django.utils.functional import cached_property
 
 from ..settings import (
     REPORTING_AGENT_MODEL,
@@ -52,6 +53,7 @@ class Contract(REAObject):
 
 
 class SalesOrder(Contract):
+    @cached_property
     def is_done(self):
         '''
         Sales Order is considered done when Payment has been reconciled
@@ -71,6 +73,32 @@ class SalesOrder(Contract):
             ).earliest()
         except Reconciliation.DoesNotExist:
             # If SalesOrder lacks of either initiator or negotiator is not done
+            return False
+
+        return initiator.is_reconciled and terminator.is_reconciled
+
+
+class Burndown(Contract):
+    @cached_property
+    def is_done(self):
+        '''
+        Burndown is considered done when Payment has been reconciled
+        against the Labour and the Work has been fulfilled.
+        '''
+
+        events = self.commitment_set.all()
+
+        try:
+            initiator = Reconciliation.objects.filter(
+                event__in=events,
+                reconciliationinitiator__isnull=False
+            ).earliest()
+            terminator = Reconciliation.objects.filter(
+                event__in=events,
+                reconciliationterminator__isnull=False
+            ).earliest()
+        except Reconciliation.DoesNotExist:
+            # If Burndown lacks of either initiator or negotiator is not done
             return False
 
         return initiator.is_reconciled and terminator.is_reconciled

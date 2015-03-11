@@ -1,6 +1,7 @@
 from django.test import TestCase
 
 from rea.models import (
+    Burndown,
     DecrementCommitment,
     DecrementEvent,
     IncrementCommitment,
@@ -152,4 +153,223 @@ class SalesOrderTest(TestCase):
         terminator_02.save()
 
         # Okay, OMG, the existance of these events means we're sorted
-        self.assertTrue(self.order.is_done(), 'SalesOrder is not done')
+        self.assertTrue(self.order.is_done, 'SalesOrder is not done')
+
+
+class WorkedHoursTest(TestCase):
+    def setUp(self):
+        # Agents
+        self.gam = Person.objects.create(name='Gamaliel', slug='gam')
+        self.daz = Person.objects.create(name='Daryl', slug='daz')
+
+        # Resources
+        self.labour = Resource.objects.create(name='Labour')
+        self.currency = Resource.objects.create(name='GBP')
+
+        # Contracts
+        self.burndown = Burndown.objects.create(
+            recipient=self.gam,
+            provider=self.daz
+        )
+
+        # Commitments
+        self.commitments = {
+            'decrement': [
+                DecrementCommitment.objects.create(
+                    contract=self.burndown,
+                    resource=self.labour,
+                    quantity=40,
+                    receiving_agent=self.daz
+                ),
+                DecrementCommitment.objects.create(
+                    contract=self.burndown,
+                    resource=self.labour,
+                    quantity=25,
+                    receiving_agent=self.daz
+                ),
+                DecrementCommitment.objects.create(
+                    contract=self.burndown,
+                    resource=self.labour,
+                    quantity=30,
+                    receiving_agent=self.daz
+                ),
+                DecrementCommitment.objects.create(
+                    contract=self.burndown,
+                    resource=self.labour,
+                    quantity=20,
+                    receiving_agent=self.daz
+                )
+            ],
+            'increment': [
+                IncrementCommitment.objects.create(
+                    contract=self.burndown,
+                    resource=self.currency,
+                    quantity=2000,
+                    providing_agent=self.daz
+                ),
+                IncrementCommitment.objects.create(
+                    contract=self.burndown,
+                    resource=self.currency,
+                    quantity=2500,
+                    providing_agent=self.daz
+                )
+            ]
+        }
+
+    def test_agent_creation(self):
+        self.assertEqual(Person.objects.count(), 2)
+
+    def test_resource_creation(self):
+        self.assertEqual(Resource.objects.count(), 2)
+
+    def test_contract_creation(self):
+        self.assertEqual(Burndown.objects.count(), 1)
+
+    def test_decrement_commitments_creation(self):
+        self.assertEqual(DecrementCommitment.objects.count(), 4)
+
+    def test_increment_commitments_creation(self):
+        self.assertEqual(IncrementCommitment.objects.count(), 2)
+
+    def test_burndown_contract_pattern(self):
+        work = (
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=8
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=7
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=10
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=8
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=7
+            ),
+            # 40 hours worked
+
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=8
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=10
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=7
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=10
+            ),
+            # 40 + 35 hours worked
+
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=8
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=7
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=10
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=8
+            ),
+            DecrementEvent.objects.create(
+                resource=self.labour,
+                receiving_agent=self.daz,
+                quantity=7
+            )
+            # 40 + 35 + 40 hours worked
+        )
+
+        payments = (
+            IncrementEvent.objects.create(
+                resource=self.currency,
+                providing_agent=self.daz,
+                quantity=750
+            ),
+            IncrementEvent.objects.create(
+                resource=self.currency,
+                providing_agent=self.daz,
+                quantity=750
+            ),
+            IncrementEvent.objects.create(
+                resource=self.currency,
+                providing_agent=self.daz,
+                quantity=1500
+            ),
+            IncrementEvent.objects.create(
+                resource=self.currency,
+                providing_agent=self.daz,
+                quantity=500
+            ),
+            IncrementEvent.objects.create(
+                resource=self.currency,
+                providing_agent=self.daz,
+                quantity=1000
+            )
+        )
+
+        initiators = (
+            ReconciliationInitiator.objects.create(
+                event=self.commitments['decrement'][0]
+            ),
+            ReconciliationInitiator.objects.create(
+                event=self.commitments['decrement'][1]
+            ),
+            ReconciliationInitiator.objects.create(
+                event=self.commitments['decrement'][2]
+            ),
+            ReconciliationInitiator.objects.create(
+                event=self.commitments['decrement'][3]
+            )
+        )
+        initiators[0].events.add(*work[0:4])
+        initiators[1].events.add(*work[4:8])
+        initiators[2].events.add(*work[8:11])
+        initiators[3].events.add(*work[11:])
+        (initiator.save() for initiator in initiators)
+
+        terminators = (
+            ReconciliationTerminator.objects.create(
+                event=self.commitments['increment'][0]
+            ),
+            ReconciliationTerminator.objects.create(
+                event=self.commitments['increment'][1]
+            )
+        )
+        terminators[0].events.add(*payments[0:2])
+        terminators[0].initiators.add(*initiators[0:2])
+        terminators[1].events.add(*payments[2:])
+        terminators[1].initiators.add(*initiators[2:])
+        (terminator.save() for terminator in terminators)
+
+        self.assertTrue(self.burndown.is_done, 'Burndown Contract is not done')
