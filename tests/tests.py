@@ -1,6 +1,9 @@
 from django.test import TestCase
+from django.contrib.contenttypes.models import ContentType
 
 from rea.models import (
+    AggregatedAccount,
+    ItemizedAccount,
     Burndown,
     DecrementCommitment,
     DecrementEvent,
@@ -54,10 +57,27 @@ class SalesOrderTest(TestCase):
         self.cash = Resource.objects.create(name='AUD')
 
         # Agents
-        self.daryl = Person.objects.create(name='Daryl Antony', slug='daryl')
+        self.daryl = Person.objects.create(
+            name='Daryl Antony', 
+            slug='daryl'
+        )
+        
         self.brenton = Person.objects.create(
             name='Brenton Cleeland',
             slug='brenton'
+        )
+
+        self.fish_account = ItemizedAccount.objects.create(
+            agent=self.brenton,
+            code='999',
+            resource_type=ContentType.objects.get_for_model(self.fish)
+        )
+
+        self.cash_account = AggregatedAccount.objects.create(
+            agent=self.brenton,
+            code='888',
+            starting_balance=999.99,
+            resource_type=ContentType.objects.get_for_model(self.cash)
         )
 
         # Order
@@ -82,22 +102,26 @@ class SalesOrderTest(TestCase):
             contract=self.order,
             resource=self.fish,
             quantity=3,
-            receiving_agent=self.daryl
+            receiving_agent=self.daryl,
+            providing_agent=self.brenton
         )
 
         s01 = DecrementEvent.objects.create(
             resource=self.fish,
             receiving_agent=self.daryl,
+            providing_agent=self.brenton,
             quantity=1
         )
         s02 = DecrementEvent.objects.create(
             resource=self.fish,
             receiving_agent=self.daryl,
+            providing_agent=self.brenton,
             quantity=1
         )
         s03 = DecrementEvent.objects.create(
             resource=self.fish,
             receiving_agent=self.daryl,
+            providing_agent=self.brenton,
             quantity=1
         )
 
@@ -118,23 +142,27 @@ class SalesOrderTest(TestCase):
             contract=self.order,
             resource=self.cash,
             quantity=9.95,
-            providing_agent=self.daryl
+            providing_agent=self.daryl,
+            receiving_agent=self.brenton
         )
 
         # Sometime in the future; the following events happen
         p01 = IncrementEvent.objects.create(
             resource=self.cash,
             providing_agent=self.daryl,
+            receiving_agent=self.brenton,
             quantity=3
         )
         p02 = IncrementEvent.objects.create(
             resource=self.cash,
             providing_agent=self.daryl,
+            receiving_agent=self.brenton,
             quantity=4
         )
         p03 = IncrementEvent.objects.create(
             resource=self.cash,
             providing_agent=self.daryl,
+            receiving_agent=self.brenton,
             quantity=2.95
         )
 
@@ -154,6 +182,13 @@ class SalesOrderTest(TestCase):
 
         # Okay, OMG, the existance of these events means we're sorted
         self.assertTrue(self.order.is_done, 'SalesOrder is not done')
+
+    def test_accounts(self):
+        
+        print self.cash_account.balance()
+        print self.fish_account.balance()
+
+        import ipdb; ipdb.set_trace()
 
 
 class WorkedHoursTest(TestCase):
@@ -179,25 +214,29 @@ class WorkedHoursTest(TestCase):
                     contract=self.burndown,
                     resource=self.labour,
                     quantity=40,
-                    receiving_agent=self.daz
+                    receiving_agent=self.daz,
+                    providing_agent=self.gam
                 ),
                 DecrementCommitment.objects.create(
                     contract=self.burndown,
                     resource=self.labour,
                     quantity=25,
-                    receiving_agent=self.daz
+                    receiving_agent=self.daz,
+                    providing_agent=self.gam
                 ),
                 DecrementCommitment.objects.create(
                     contract=self.burndown,
                     resource=self.labour,
                     quantity=30,
-                    receiving_agent=self.daz
+                    receiving_agent=self.daz,
+                    providing_agent=self.gam
                 ),
                 DecrementCommitment.objects.create(
                     contract=self.burndown,
                     resource=self.labour,
                     quantity=20,
-                    receiving_agent=self.daz
+                    receiving_agent=self.daz,
+                    providing_agent=self.gam
                 )
             ],
             'increment': [
@@ -205,13 +244,15 @@ class WorkedHoursTest(TestCase):
                     contract=self.burndown,
                     resource=self.currency,
                     quantity=2000,
-                    providing_agent=self.daz
+                    providing_agent=self.daz,
+                    receiving_agent=self.gam
                 ),
                 IncrementCommitment.objects.create(
                     contract=self.burndown,
                     resource=self.currency,
                     quantity=2500,
-                    providing_agent=self.daz
+                    providing_agent=self.daz,
+                    receiving_agent=self.gam
                 )
             ]
         }
@@ -236,26 +277,31 @@ class WorkedHoursTest(TestCase):
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=8
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=7
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=10
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=8
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=7
             ),
             # 40 hours worked
@@ -263,21 +309,25 @@ class WorkedHoursTest(TestCase):
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=8
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=10
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=7
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=10
             ),
             # 40 + 35 hours worked
@@ -285,26 +335,31 @@ class WorkedHoursTest(TestCase):
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=8
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=7
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=10
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=8
             ),
             DecrementEvent.objects.create(
                 resource=self.labour,
                 receiving_agent=self.daz,
+                providing_agent=self.gam,
                 quantity=7
             )
             # 40 + 35 + 40 hours worked
@@ -314,26 +369,31 @@ class WorkedHoursTest(TestCase):
             IncrementEvent.objects.create(
                 resource=self.currency,
                 providing_agent=self.daz,
+                receiving_agent=self.gam,
                 quantity=750
             ),
             IncrementEvent.objects.create(
                 resource=self.currency,
                 providing_agent=self.daz,
+                receiving_agent=self.gam,
                 quantity=750
             ),
             IncrementEvent.objects.create(
                 resource=self.currency,
                 providing_agent=self.daz,
+                receiving_agent=self.gam,
                 quantity=1500
             ),
             IncrementEvent.objects.create(
                 resource=self.currency,
                 providing_agent=self.daz,
+                receiving_agent=self.gam,
                 quantity=500
             ),
             IncrementEvent.objects.create(
                 resource=self.currency,
                 providing_agent=self.daz,
+                receiving_agent=self.gam,
                 quantity=1000
             )
         )
@@ -372,4 +432,4 @@ class WorkedHoursTest(TestCase):
         terminators[1].initiators.add(*initiators[2:])
         (terminator.save() for terminator in terminators)
 
-        self.assertTrue(self.burndown.is_done, 'Burndown Contract is not done')
+        self.assertTrue(self.burndown.is_done, 'Burndown Contract is done')

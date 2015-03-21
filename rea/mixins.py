@@ -20,27 +20,31 @@ class LineMixin(models.Model):
     Polymorphic Mixin for Increment and Decrement lines
     '''
     resource = models.ForeignKey('rea.Resource')
-    quantity = models.DecimalField(max_digits=13, decimal_places=4)
+
+    receiving_agent = models.ForeignKey(
+        RECEIVING_AGENT_MODEL,
+        related_name='%(app_label)s_%(class)s_reveiving_agents'
+    )
+
+    providing_agent = models.ForeignKey(
+        PROVIDING_AGENT_MODEL,
+        related_name='%(app_label)s_%(class)s_providing_agents'
+    )
+
+    quantity = models.FloatField()
 
     class Meta:
         abstract = True
 
 
 class DecrementLineMixin(LineMixin):
-    receiving_agent = models.ForeignKey(
-        RECEIVING_AGENT_MODEL,
-        related_name='%(app_label)s_%(class)s_reveiving_agents'
-    )
 
     class Meta:
         abstract = True
 
 
 class IncrementLineMixin(LineMixin):
-    providing_agent = models.ForeignKey(
-        PROVIDING_AGENT_MODEL,
-        related_name='%(app_label)s_%(class)s_providing_agents'
-    )
+   
 
     class Meta:
         abstract = True
