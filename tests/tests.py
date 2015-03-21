@@ -188,8 +188,6 @@ class SalesOrderTest(TestCase):
         print self.cash_account.balance()
         print self.fish_account.balance()
 
-        import ipdb; ipdb.set_trace()
-
 
 class WorkedHoursTest(TestCase):
     def setUp(self):

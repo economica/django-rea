@@ -39,8 +39,6 @@ class AggregatedAccount(Account):
         # period; for the given resource_type and given agent
         balance = self.starting_balance
 
-        import ipdb; ipdb.set_trace()
-
         increment_events_qset = get_model('rea.IncrementEvent').objects.filter(
             receiving_agent=self.agent
             # occured_at__gte=datetime.datetime(1970, 1, 1, 0, 0) # TODO this should be a setting or lookup value
