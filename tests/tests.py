@@ -227,11 +227,9 @@ class SalesOrderTest(TestCase):
 
         # Okay, OMG, the existance of these events means we're sorted
         # self.assertTrue(self.order.is_done, 'SalesOrder is done')
-
         
         self.assertEqual(self.cash_account.balance(), decimal.Decimal('9.95'))
         self.assertEqual(self.fish_account.balance(), decimal.Decimal('0'))
-
 
 
 class WorkedHoursTest(TestCase):
