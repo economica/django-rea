@@ -31,7 +31,10 @@ class LineMixin(models.Model):
         related_name='%(app_label)s_%(class)s_providing_agents'
     )
 
-    quantity = models.FloatField()
+    quantity = models.DecimalField(
+        max_digits=13, 
+        decimal_places=4
+    )
 
     class Meta:
         abstract = True

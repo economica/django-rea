@@ -19,11 +19,17 @@ class Reconciliation(REAObject):
         related_name='%(app_label)s_%(class)s_events'
     )
 
-    value = models.FloatField()
+    value = models.DecimalField(
+        default=0.00,
+        decimal_places=4,
+        max_digits=13
+    )
 
     # possibly can be determined automatically
-    unbalanced_value = models.FloatField(
-        default=0
+    unbalanced_value = models.DecimalField(
+        default=0.00,
+        decimal_places=4,
+        max_digits=13
     )
 
     # system user can override and declare reconciliation

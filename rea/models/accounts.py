@@ -1,4 +1,5 @@
-import datetime, decimal
+import datetime
+from decimal import Decimal
 
 from django.db import models
 from django.db.models.loading import get_model
@@ -29,8 +30,11 @@ class Account(PolymorphicModel):
 
 class AggregatedAccount(Account):
 
-    starting_balance = models.FloatField(
-        default=0)
+    starting_balance = models.DecimalField(
+        default=0.00,
+        decimal_places=4,
+        max_digits=13
+    )
 
     def balance(self):
 
@@ -39,17 +43,22 @@ class AggregatedAccount(Account):
         # period; for the given resource_type and given agent
         balance = self.starting_balance
 
-        increment_events_qset = get_model('rea.IncrementEvent').objects.filter(
-            receiving_agent=self.agent
+        increment_events_qset = get_model('rea.IncrementEvent').objects.filter(receiving_agent=self.agent)
             # occured_at__gte=datetime.datetime(1970, 1, 1, 0, 0) # TODO this should be a setting or lookup value
-            )
+            # )
+        # import ipdb; ipdb.set_trace()
 
         increment_events = []
 
         for increment_event in increment_events_qset:
             if ContentType.objects.get_for_model(increment_event.resource) == self.resource_type:
                 increment_events.append(increment_event)
-                balance = balance + increment_event.quantity
+                balance = Decimal(balance) + Decimal(increment_event.quantity)
+                
+                print 'increase {} {} giving {} in balance'.format(
+                    increment_event.quantity,
+                    self.resource_type,
+                    balance)
 
         decrement_events_qset = get_model('rea.DecrementEvent').objects.filter(
             providing_agent=self.agent
@@ -61,7 +70,12 @@ class AggregatedAccount(Account):
         for decrement_event in decrement_events_qset:
             if ContentType.objects.get_for_model(decrement_event.resource) == self.resource_type:
                 decrement_events.append(decrement_event)
-                balance = balance - decrement_event.quantity
+                balance = Decimal(balance) - Decimal(decrement_event.quantity)
+
+                print 'decrease {} {} giving {} in balance'.format(
+                    decrement_event.quantity,
+                    self.resource_type,
+                    balance)
 
         return balance
 
@@ -78,5 +92,39 @@ class ItemizedAccount(Account):
         '''
         Return a count of the Itemized Resources held in this account.
         '''
-        return ItemizedAccountResource.objects.filter(account=self).count()
+        balance = ItemizedAccountResource.objects.filter(account=self).count()
+
+        increment_events_qset = get_model('rea.IncrementEvent').objects.filter(
+            providing_agent=self.agent
+            # occured_at__gte=datetime.datetime(1970, 1, 1, 0, 0) # TODO this should be a setting or lookup value
+            )
+
+        for increment_event in increment_events_qset:
+            if ContentType.objects.get_for_model(increment_event.resource) == self.resource_type:
+                balance -= increment_event.quantity
+                print 'increase {} {}'.format(
+                    self.resource_type,
+                    balance
+                    )
+
+
+        decrement_events_qset = get_model('rea.DecrementEvent').objects.filter(
+            providing_agent=self.agent
+            # occured_at__gte=datetime.datetime(1970, 1, 1, 0, 0) # TODO this should be a setting or lookup value
+            )
+
+        for decrement_event in decrement_events_qset:
+            if ContentType.objects.get_for_model(decrement_event.resource) == self.resource_type:
+                balance -= decrement_event.quantity
+                print 'decrease {} {}'.format(
+                    self.resource_type,
+                    balance
+                    )
+
+
+        print 'counted {} {}'.format(
+            balance,
+            self.resource_type)
+
+        return balance
 
