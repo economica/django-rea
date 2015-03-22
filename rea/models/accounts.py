@@ -1,5 +1,5 @@
-import datetime
 from decimal import Decimal
+from itertools import chain
 
 from django.db import models
 from django.db.models.loading import get_model
@@ -14,11 +14,13 @@ ACCOUNTABLE_RESOURCES = ['resource',]
 
 class Account(PolymorphicModel):
     '''
-    Instantiate Accounts
+    An Account is used to describe a balance of a Resource, kept on hand by an
+    Economic Agent
+
+    An REA system should use either an AggregatedAccount or an ItemizedAccount
     '''
 
-    # An account code field to be consistent with 
-    # accounting practices.
+    # An account code field to be consistent with accounting practices.
     code = models.CharField(max_length=255)
 
     agent = models.ForeignKey('rea.Agent')
@@ -27,12 +29,12 @@ class Account(PolymorphicModel):
         'contenttypes.ContentType',
         limit_choices_to=ACCOUNTABLE_RESOURCES)
 
+    def starting_balance(self):
+        raise NotImplemented
 
     def balance(self):
 
         balance = self.starting_balance
-        
-        from itertools import chain
         
         events = list(chain(
             get_model('rea.IncrementEvent').objects.filter(receiving_agent=self.agent),
